@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import com.atlassian.jira.rest.client.api.JiraRestClient;
@@ -21,6 +22,7 @@ import com.uom.breporter.service.bug.BugService;
  *
  * @author ntinaki2f
  */
+@Slf4j
 @Service("bugService")
 public class BugServiceImpl implements BugService{
  
@@ -30,11 +32,9 @@ public class BugServiceImpl implements BugService{
 	        URI jiraServerUri = null;
 			try {
 				jiraServerUri = new URI(url);
-			} catch (URISyntaxException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+			} catch (URISyntaxException e) {
+				log.error("Syntax Exception ", e);
 			}
-	        //put password in order to work
 	        final JiraRestClient restClient = factory.createWithBasicHttpAuthentication(jiraServerUri, username, password);
 	        
 	        try {
@@ -42,7 +42,7 @@ public class BugServiceImpl implements BugService{
 	        	sb.append("project=");
 	        	sb.append(projectKey);
 	        	sb.append("and type=bug");
-	            //get all bugs for specific project key
+
 	            Iterable<Issue> issues = restClient.getSearchClient().searchJql(sb.toString()).get().getIssues();
 	           
 	            List<Issue> myList = Lists.newArrayList(issues);
@@ -51,19 +51,15 @@ public class BugServiceImpl implements BugService{
 	            	dtoList.add(IssueDTO.map(issue));
 	            }
 	        } catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.error("Interrupted Exception : ",e);
 			} catch (ExecutionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.error("Execution Excetion ",e);
 			}
 	        finally {
-	            // cleanup the restClient
 	            try {
 					restClient.close();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					log.error("Error closing connection ",e);
 				}
 	        }
 			return dtoList;
